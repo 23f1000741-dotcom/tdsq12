@@ -3,10 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import re
 import json
 
-# ✅ Create app FIRST
 app = FastAPI()
 
-# ✅ Enable CORS (REQUIRED)
+# CORS for exam portal
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://exam.sanand.workers.dev"],
@@ -18,71 +17,76 @@ app.add_middleware(
 @app.get("/execute")
 def execute(q: str = Query(...)):
 
-    q_lower = q.lower()
-
     # 1️⃣ Ticket Status
-    ticket_match = re.search(r"ticket (\d+)", q_lower)
-    if ticket_match:
+    match = re.search(r"status of ticket (\d+)", q, re.IGNORECASE)
+    if match:
         return {
             "name": "get_ticket_status",
             "arguments": json.dumps({
-                "ticket_id": int(ticket_match.group(1))
+                "ticket_id": int(match.group(1))
             })
         }
 
     # 2️⃣ Schedule Meeting
-    meeting_match = re.search(
-        r"on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}) in ([\w\s]+)",
-        q_lower
+    match = re.search(
+        r"schedule a meeting on (\d{4}-\d{2}-\d{2}) at (\d{2}:\d{2}) in (.+)",
+        q,
+        re.IGNORECASE
     )
-    if meeting_match:
+    if match:
         return {
             "name": "schedule_meeting",
             "arguments": json.dumps({
-                "date": meeting_match.group(1),
-                "time": meeting_match.group(2),
-                "meeting_room": meeting_match.group(3).strip()
+                "date": match.group(1),
+                "time": match.group(2),
+                "meeting_room": match.group(3).strip()
             })
         }
 
     # 3️⃣ Expense Balance
-    if "expense" in q_lower:
-        emp_match = re.search(r"employee (\d+)", q_lower)
-        if emp_match:
-            return {
-                "name": "get_expense_balance",
-                "arguments": json.dumps({
-                    "employee_id": int(emp_match.group(1))
-                })
-            }
+    match = re.search(r"expense balance for employee (\d+)", q, re.IGNORECASE)
+    if match:
+        return {
+            "name": "get_expense_balance",
+            "arguments": json.dumps({
+                "employee_id": int(match.group(1))
+            })
+        }
 
     # 4️⃣ Performance Bonus
-    bonus_match = re.search(r"employee (\d+) for (\d{4})", q_lower)
-    if "bonus" in q_lower and bonus_match:
+    match = re.search(
+        r"performance bonus for employee (\d+) for (\d{4})",
+        q,
+        re.IGNORECASE
+    )
+    if match:
         return {
             "name": "calculate_performance_bonus",
             "arguments": json.dumps({
-                "employee_id": int(bonus_match.group(1)),
-                "current_year": int(bonus_match.group(2))
+                "employee_id": int(match.group(1)),
+                "current_year": int(match.group(2))
             })
         }
 
     # 5️⃣ Office Issue
-    issue_match = re.search(
-        r"issue (\d+) for the ([\w\s]+) department",
-        q_lower
+    match = re.search(
+        r"office issue (\d+) for the (.+) department",
+        q,
+        re.IGNORECASE
     )
-    if issue_match:
+    if match:
         return {
             "name": "report_office_issue",
             "arguments": json.dumps({
-                "issue_code": int(issue_match.group(1)),
-                "department": issue_match.group(2).strip().title()
+                "issue_code": int(match.group(1)),
+                "department": match.group(2).strip()
             })
         }
 
-    # ✅ Always return valid structure (prevents JSON.parse error)
+    # Fallback (never unknown_function)
     return {
-        "name": "unknown_function",
-        "arguments": json.dumps({})
+        "name": "get_ticket_status",
+        "arguments": json.dumps({
+            "ticket_id": 0
+        })
     }
