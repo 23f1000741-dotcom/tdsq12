@@ -9,9 +9,9 @@ app = FastAPI()
 # ✅ Enable CORS (REQUIRED)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["GET", "OPTIONS"],  # 🔥 important
+    allow_origins=["https://exam.sanand.workers.dev"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
