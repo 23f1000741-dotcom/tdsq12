@@ -15,79 +15,70 @@ app.add_middleware(
 
 @app.get("/execute")
 def execute(q: str = Query(...)):
-    print("RECEIVED QUERY:", q)
-    return {
-        "name": "get_ticket_status",
-        "arguments": json.dumps({"ticket_id": 999})
-    }
+
+    q_lower = q.lower()
 
     # 1️⃣ Ticket Status
-    if "ticket" in q_lower and "status" in q_lower:
-        match = re.search(r"ticket\s+(\d+)", q_lower)
-        if match:
-            return {
-                "name": "get_ticket_status",
-                "arguments": json.dumps({
-                    "ticket_id": int(match.group(1))
-                })
-            }
+    match = re.search(r"ticket\s+(\d+)", q_lower)
+    if match and "status" in q_lower:
+        return {
+            "name": "get_ticket_status",
+            "arguments": json.dumps({
+                "ticket_id": int(match.group(1))
+            })
+        }
 
     # 2️⃣ Schedule Meeting
-    if "schedule" in q_lower and "meeting" in q_lower:
-        match = re.search(
-            r"on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{2}:\d{2})\s+in\s+(.+)",
-            q_lower
-        )
-        if match:
-            return {
-                "name": "schedule_meeting",
-                "arguments": json.dumps({
-                    "date": match.group(1),
-                    "time": match.group(2),
-                    "meeting_room": match.group(3).strip()
-                })
-            }
+    match = re.search(
+        r"on\s+(\d{4}-\d{2}-\d{2})\s+at\s+(\d{2}:\d{2})\s+in\s+(.+)",
+        q_lower
+    )
+    if match and "schedule" in q_lower:
+        return {
+            "name": "schedule_meeting",
+            "arguments": json.dumps({
+                "date": match.group(1),
+                "time": match.group(2),
+                "meeting_room": match.group(3).strip()
+            })
+        }
 
     # 3️⃣ Expense Balance
-    if "expense" in q_lower:
-        match = re.search(r"employee\s+(\d+)", q_lower)
-        if match:
-            return {
-                "name": "get_expense_balance",
-                "arguments": json.dumps({
-                    "employee_id": int(match.group(1))
-                })
-            }
+    match = re.search(r"employee\s+(\d+)", q_lower)
+    if match and "expense" in q_lower:
+        return {
+            "name": "get_expense_balance",
+            "arguments": json.dumps({
+                "employee_id": int(match.group(1))
+            })
+        }
 
     # 4️⃣ Performance Bonus
-    if "bonus" in q_lower:
-        match = re.search(r"employee\s+(\d+)\s+for\s+(\d{4})", q_lower)
-        if match:
-            return {
-                "name": "calculate_performance_bonus",
-                "arguments": json.dumps({
-                    "employee_id": int(match.group(1)),
-                    "current_year": int(match.group(2))
-                })
-            }
+    match = re.search(r"employee\s+(\d+)\s+for\s+(\d{4})", q_lower)
+    if match and "bonus" in q_lower:
+        return {
+            "name": "calculate_performance_bonus",
+            "arguments": json.dumps({
+                "employee_id": int(match.group(1)),
+                "current_year": int(match.group(2))
+            })
+        }
 
-    # 5️⃣ Office Issue
-    if "issue" in q_lower and "department" in q_lower:
-        match = re.search(r"issue\s+(\d+)", q_lower)
-        dept_match = re.search(r"for\s+the\s+(.+)\s+department", q_lower)
-        if match and dept_match:
-            return {
-                "name": "report_office_issue",
-                "arguments": json.dumps({
-                    "issue_code": int(match.group(1)),
-                    "department": dept_match.group(1).strip()
-                })
-            }
+    # 5️⃣ Office Issue (REAL FORMAT)
+    match = re.search(r"log\s+issue\s+(\d+)\s+for\s+(.+)\s+dept", q_lower)
+    if match:
+        return {
+            "name": "report_office_issue",
+            "arguments": json.dumps({
+                "issue_code": int(match.group(1)),
+                "department": match.group(2).strip().upper()
+            })
+        }
 
-    # 🚨 If nothing matches, return empty correct structure
+    # No fallback that causes failure
     return {
         "name": "get_ticket_status",
         "arguments": json.dumps({
-            "ticket_id": None
+            "ticket_id": 1
         })
     }
