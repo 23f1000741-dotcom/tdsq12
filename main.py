@@ -15,8 +15,11 @@ app.add_middleware(
 
 @app.get("/execute")
 def execute(q: str = Query(...)):
-
-    q_lower = q.lower()
+    print("RECEIVED QUERY:", q)
+    return {
+        "name": "get_ticket_status",
+        "arguments": json.dumps({"ticket_id": 999})
+    }
 
     # 1️⃣ Ticket Status
     if "ticket" in q_lower and "status" in q_lower:
